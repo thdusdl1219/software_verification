@@ -22,6 +22,7 @@ public class Problem3 {
 	public boolean unsat(Formula f) throws Exception {
 		
 		//TODO: translate f into a set of clauses in CNF using Problem2.CNF
+		Formula snf = Problem1.simplify(Problem1.NNF(f));
 		Set<Set<Integer>> cls = Problem2.CNF(f);
 		
 		//TODO: Implement a simple resolution algorithm.
@@ -82,5 +83,6 @@ public class Problem3 {
 		Set<Set<Integer>> discd = makeDis(cs, ds);
 		
 		cls.addAll(discd);
+		vars.remove(i);
 	}
 }
