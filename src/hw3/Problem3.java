@@ -29,7 +29,7 @@ public class Problem3 {
 		
 		
 		//TODO: resolution rule is applied until the empty clause is derived or, the resolution of every possible pair of clauses is performed.
-		Set<Integer> vars = Problem2.vars(cls);
+		Set<Integer> vars = Problem1.vars(snf);
 		
 		while(true) {
 			if(cls.stream().anyMatch(subs -> subs.isEmpty())) {
@@ -38,7 +38,7 @@ public class Problem3 {
 			if(vars.isEmpty()) {
 				return false;
 			}
-			resolution(cls, vars);
+			resolution(cls, vars, new HashSet<Integer>(vars));
 		}
 
 		//TODO: may want to use some data structure to maintain information about which pairs of clauses are considered (to avoid infinite loop).  
@@ -46,43 +46,73 @@ public class Problem3 {
 	
 	
 	private Set<Integer> mapper(Set<Integer> s, Integer n) {
-		s.remove(n);
-		return s;
-	}
-	
-	private Set<Integer> simplify (Set<Integer> s1, Set<Integer> s2) {
-		Set<Integer> result = new HashSet<Integer> ();
-		
-		result.addAll(s1);
-		result.addAll(s2);
-		
-		Set<Integer> tmp = new HashSet<Integer> (result);
-		
-		result = result.stream().filter(i -> !tmp.contains(-i)).collect(Collectors.toCollection(HashSet::new));
-		
+		Set<Integer> result = new HashSet<Integer> (s);
+		result.remove(n);
 		return result;
 	}
 	
-	private Set<Set<Integer>> makeDis(Set<Set<Integer>> c, Set<Set<Integer>> d) {
+	private Set<Set<Integer>> simplify (Set<Integer> s) {
+		
+		Set<Integer> tmp = new HashSet<Integer> (s);
+		//Set<Integer> ss = s.stream().filter(i -> !tmp.contains(-i)).collect(Collectors.toCollection(HashSet::new));
 		Set<Set<Integer>> result = new HashSet<Set<Integer>> ();
-
+		if(s.stream().anyMatch(i -> tmp.contains(-i)))
+			return result;
+		else {
+			result.add(s);
+			return result;
+		}
+	}
+	
+	private Set<Set<Integer>> makeDis(Set<Set<Integer>> c, Set<Set<Integer>> d, Integer i) {
+		Set<Set<Integer>> result = new HashSet<Set<Integer>> ();
+		c = c.stream().map(s -> mapper(s, i)).collect(Collectors.toCollection(HashSet::new));
+		d = d.stream().map(s -> mapper(s, -i)).collect(Collectors.toCollection(HashSet::new));
 		for(Set<Integer> s1 : c) {
 			for(Set<Integer> s2 : d) {
-				result.add(simplify(s1, s2));
+				if(s1.isEmpty() && s2.isEmpty()) {result.add(new HashSet<Integer>()); return result;}
+				else {
+					Set<Integer> ns = new HashSet<Integer> (s1);
+					ns.addAll(s2);
+					result.addAll(simplify(ns));
+				}
 			}
 		}
 		
 		return result;
 	}
 	
-	private void resolution(Set<Set<Integer>> cls, Set<Integer> vars) {
-		Integer i = vars.iterator().next();
-		Set<Set<Integer>> cs = cls.stream().filter(s -> s.contains(i)).map(s -> mapper(s, i)).collect(Collectors.toCollection(HashSet::new));
-		Set<Set<Integer>> ds = cls.stream().filter(s -> s.contains(-i)).map(s -> mapper(s, -i)).collect(Collectors.toCollection(HashSet::new));
+	private Integer select(Set<Set<Integer>> cls, Set<Integer> vars) {
+		for(Integer j : vars) {
+			if(cls.stream().anyMatch(s -> s.contains(j) && s.size() == 1))
+				return j;
+		}
 		
-		Set<Set<Integer>> discd = makeDis(cs, ds);
+		return vars.iterator().next();
+	}
+	
+	private void resolution(Set<Set<Integer>> cls, Set<Integer> vars, Set<Integer> cvars) {
+		Integer i  = select(cls, vars);
+		Set<Set<Integer>> tmp = new HashSet<Set<Integer>> (cls);
+		for(Integer j : cvars) {
+			tmp.stream().filter(s ->s.contains(j) && s.contains(-j)).forEach(s -> cls.remove(s));
+		}
+		//int size = cls.size();
+		Set<Set<Integer>> cs = cls.stream().filter(s -> s.contains(i)).collect(Collectors.toCollection(HashSet::new));
+		Set<Set<Integer>> ds = cls.stream().filter(s -> s.contains(-i)).collect(Collectors.toCollection(HashSet::new));
+		
+		Set<Set<Integer>> discd = makeDis(cs, ds, i);
+		
+		//Set<Set<Integer>> scs = cls.stream().filter(s -> s.contains(i) && s.size() == 1).collect(Collectors.toCollection(HashSet::new));
+		//Set<Set<Integer>> dcs = cls.stream().filter(s -> s.contains(-i) && s.size() == 1).collect(Collectors.toCollection(HashSet::new));
 		
 		cls.addAll(discd);
+		//cls.removeAll(cs);
+		//cls.removeAll(ds);
+		
+		//if(!scs.isEmpty() && !dcs.isEmpty())
+			//cls.add(new HashSet<Integer> ());
+		//if(size == cls.size())
 		vars.remove(i);
 	}
 }

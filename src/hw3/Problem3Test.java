@@ -24,11 +24,22 @@ import hw3.formula.Variable;
 
 @RunWith (JUnitQuickcheck.class)
 public class Problem3Test {
-
-	@Property(trials = 500)
+	
+	@Property(trials = 5000)
 	public void testUnsat(@From(FormulaGenerator.class) Formula f) throws Exception {
 		Problem3 p = new Problem3 ();
-		p.unsat(new Negation(f));
+		boolean b = p.unsat(f);
+		if(b) {
+			System.out.println(Problem1.simplify(Problem1.NNF(f)).toString());
+			System.out.println(Problem2.CNF(f));
+		}
 	}
+	
+	/*@Test
+	public void test() throws Exception {
+		Problem3 p = new Problem3 ();
+		Formula f = Formula.parseFormula("(((((! p2) && (! p3)) || (! p3)) || p2) || p2)");
+		boolean b = p.unsat(f);
+	} */
 
 }

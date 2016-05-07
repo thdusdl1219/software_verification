@@ -49,7 +49,7 @@ public class Problem2 {
 			Formula f1 = cf.getSubformulas().get(0);
 			Formula f2 = cf.getSubformulas().get(1);
 			Formula negv = new Negation(newv);
-			return new Conjunction(new Disjunction(negv, f1), new Conjunction(new Disjunction(negv, f2), new Disjunction(f1, f2, newv)));  
+			return new Conjunction(new Disjunction(negv, f1), new Conjunction(new Disjunction(negv, f2), new Disjunction(new Negation(f1), new Disjunction(new Negation(f2), newv))));  
 		}
 		else if(f instanceof Disjunction) {
 			Disjunction df = (Disjunction)f;
@@ -57,27 +57,50 @@ public class Problem2 {
 			Formula f1 = df.getSubformulas().get(0);
 			Formula f2 = df.getSubformulas().get(1);
 			Formula negv = new Negation(newv);
-			return new Conjunction(new Disjunction(negv, f1, f2), new Conjunction(new Disjunction(new Negation(f1), newv), new Disjunction(new Negation(f2), newv)));
+			return new Conjunction(new Disjunction(negv, new Disjunction(f1, f2)), new Conjunction(new Disjunction(new Negation(f1), newv), new Disjunction(new Negation(f2), newv)));
 		}
 		else 
 			throw new Exception("error");
 	}
 	
-	
-	private static Formula Tesjtin (Formula f) throws Exception {  
+	private static Formula wrapperTesjtin (Formula f) throws Exception {  
 		if(f instanceof Negation) return f;  
 		else if(f instanceof Conjunction) {
 			Map<Formula, Variable> m = new HashMap<Formula, Variable>();
-			findsubF(f, m);
+			findsubF(f, m, Problem1.maxVar(f) + 1);
 			Formula g = m.keySet().iterator().next();
 			return new Conjunction(Tesjtin(modify(f, m)), cnf(m.get(g), g));
 		}
 		
 		else if(f instanceof Disjunction) {
 			Map<Formula, Variable> m = new HashMap<Formula, Variable>();
-			findsubF(f, m);
+			findsubF(f, m, Problem1.maxVar(f) + 1);
 			Formula g = m.keySet().iterator().next();
 			return new Conjunction(Tesjtin(modify(f, m)), cnf(m.get(g), g));
+		}
+		else return f;	
+	}
+	
+	private static Formula Tesjtin (Formula f) throws Exception {  
+		if(f instanceof Negation) return f;  
+		else if(f instanceof Conjunction) {
+			if(f.operation(checkor)) return f;
+			else {
+				Map<Formula, Variable> m = new HashMap<Formula, Variable>();
+				findsubF(f, m, Problem1.maxVar(f) + 1);
+				Formula g = m.keySet().iterator().next();
+				return new Conjunction(Tesjtin(modify(f, m)), cnf(m.get(g), g));
+			}
+		}
+		
+		else if(f instanceof Disjunction) {
+			if(f.operation(checkor)) return f;
+			else {
+				Map<Formula, Variable> m = new HashMap<Formula, Variable>();
+				findsubF(f, m, Problem1.maxVar(f) + 1);
+				Formula g = m.keySet().iterator().next();
+				return new Conjunction(Tesjtin(modify(f, m)), cnf(m.get(g), g));
+			}
 		}
 		else return f;	
 	}
@@ -107,7 +130,7 @@ public class Problem2 {
 		return f.operation(evaluator);
 	}
 	
-	private static void findsubF (Formula f, Map<Formula, Variable> m) {
+	private static void findsubF (Formula f, Map<Formula, Variable> m, int maxVar) {
 		if(m.isEmpty()) {
 			if(f instanceof Conjunction){ 
 				Conjunction cf = (Conjunction)f;
@@ -123,12 +146,11 @@ public class Problem2 {
 						break;
 				}
 				if(varnum == 2) {
-					Integer maxVar = Problem1.maxVar(f);
-					m.put(f, new Variable(maxVar+1));
+					m.put(f, new Variable(maxVar));
 					return;
 				}
 				else {
-					cf.getSubformulas().stream().forEach(g->findsubF(g, m));;
+					cf.getSubformulas().stream().forEach(g->findsubF(g, m, maxVar));;
 					return;
 				}
 				
@@ -147,12 +169,11 @@ public class Problem2 {
 						break;
 				}
 				if(varnum == 2) {
-					Integer maxVar = Problem1.maxVar(f);
-					m.put(f, new Variable(maxVar+1));
+					m.put(f, new Variable(maxVar));
 					return;
 				}
 				else {
-					df.getSubformulas().stream().forEach(g->findsubF(g, m));;
+					df.getSubformulas().stream().forEach(g->findsubF(g, m, maxVar));;
 					return;
 				}
 			}
@@ -163,33 +184,33 @@ public class Problem2 {
 		}
 	}
 	
+	static FormulaVisitor<Boolean> checkor = new FormulaVisitor<Boolean>() {
+		@Override public Boolean visit (Negation f) {  return true;  }
+		@Override public Boolean visit (Conjunction f) {  return f.getSubformulas().stream().reduce(true, (r,g)-> r && g.operation(this), (a,b)->a&&b);  }
+		@Override public Boolean visit (Disjunction f) {
+			boolean r = true;
+				for(Formula g : f.getSubformulas()) {
+					if(g instanceof Negation) r = r && true;
+					else if (g instanceof Variable){
+						r = r && true;
+					}
+					else if (g instanceof Constant){
+						r = r && true;
+					}
+					else if (g instanceof Disjunction){
+						r = r && g.operation(this);
+					}
+					else
+						r = r && false;
+				} 
+				return r;
+			}
+		@Override public Boolean visit (Implication f) {  return false; }
+		@Override public Boolean visit (Constant f) { return true; }
+		@Override public Boolean visit (Variable f) { return true; }
+	};
 	
 	private static boolean checkCNF (Formula f) {
-		FormulaVisitor<Boolean> checkor = new FormulaVisitor<Boolean>() {
-			@Override public Boolean visit (Negation f) {  return true;  }
-			@Override public Boolean visit (Conjunction f) {  return f.getSubformulas().stream().reduce(true, (r,g)-> r && g.operation(this), (a,b)->a&&b);  }
-			@Override public Boolean visit (Disjunction f) {
-				boolean r = true;
-					for(Formula g : f.getSubformulas()) {
-						if(g instanceof Negation) r = r && true;
-						else if (g instanceof Variable){
-							r = r && true;
-						}
-						else if (g instanceof Constant){
-							r = r && true;
-						}
-						else if (g instanceof Disjunction){
-							r = r && g.operation(this);
-						}
-						else
-							r = r && false;
-					} 
-					return r;
-				}
-			@Override public Boolean visit (Implication f) {  return false; }
-			@Override public Boolean visit (Constant f) { return true; }
-			@Override public Boolean visit (Variable f) { return true; }
-		};
 		if(f instanceof Conjunction) {
 			Conjunction cf = (Conjunction)f;
 			return cf.getSubformulas().stream().reduce(true, (r,g) -> r && g.operation(checkor), (a,b) -> a && b);
@@ -279,11 +300,13 @@ public class Problem2 {
 		
 		Formula checkf = snf;
 		if(!checkCNF(checkf)) {
-			checkf = Tesjtin(checkf);
+			checkf = wrapperTesjtin(checkf);
 			checkf = Problem1.simplify(Problem1.NNF(checkf));
 		}
 		
-		if(!checkCNF(checkf)) throw new Exception();
+		if(!checkCNF(checkf)) {
+			throw new Exception();
+		}
 		
 		
 		//return f.operation(evaluator);
