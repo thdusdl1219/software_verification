@@ -49,7 +49,7 @@ public class Problem2 {
 			Formula f1 = cf.getSubformulas().get(0);
 			Formula f2 = cf.getSubformulas().get(1);
 			Formula negv = new Negation(newv);
-			return new Conjunction(new Disjunction(negv, f1), new Disjunction(negv, f2), new Disjunction(f1, f2, newv));  
+			return new Conjunction(new Disjunction(negv, f1), new Conjunction(new Disjunction(negv, f2), new Disjunction(f1, f2, newv)));  
 		}
 		else if(f instanceof Disjunction) {
 			Disjunction df = (Disjunction)f;
@@ -57,7 +57,7 @@ public class Problem2 {
 			Formula f1 = df.getSubformulas().get(0);
 			Formula f2 = df.getSubformulas().get(1);
 			Formula negv = new Negation(newv);
-			return new Conjunction(new Disjunction(negv, f1, f2), new Disjunction(new Negation(f1), newv), new Disjunction(new Negation(f2), newv));
+			return new Conjunction(new Disjunction(negv, f1, f2), new Conjunction(new Disjunction(new Negation(f1), newv), new Disjunction(new Negation(f2), newv)));
 		}
 		else 
 			throw new Exception("error");
@@ -168,7 +168,24 @@ public class Problem2 {
 		FormulaVisitor<Boolean> checkor = new FormulaVisitor<Boolean>() {
 			@Override public Boolean visit (Negation f) {  return true;  }
 			@Override public Boolean visit (Conjunction f) {  return f.getSubformulas().stream().reduce(true, (r,g)-> r && g.operation(this), (a,b)->a&&b);  }
-			@Override public Boolean visit (Disjunction f) {  return f.getSubformulas().stream().reduce(true, (r,g)-> r && g.operation(this), (a,b)->a&&b);  }
+			@Override public Boolean visit (Disjunction f) {
+				boolean r = true;
+					for(Formula g : f.getSubformulas()) {
+						if(g instanceof Negation) r = r && true;
+						else if (g instanceof Variable){
+							r = r && true;
+						}
+						else if (g instanceof Constant){
+							r = r && true;
+						}
+						else if (g instanceof Disjunction){
+							r = r && g.operation(this);
+						}
+						else
+							r = r && false;
+					} 
+					return r;
+				}
 			@Override public Boolean visit (Implication f) {  return false; }
 			@Override public Boolean visit (Constant f) { return true; }
 			@Override public Boolean visit (Variable f) { return true; }
@@ -185,29 +202,65 @@ public class Problem2 {
 	private static void formulatoSet (Formula f, Set<Set<Integer>> s) {
 		FormulaVisitor<Set<Integer>> evaluator = new FormulaVisitor<Set<Integer>>() {
 			@Override public Set<Integer> visit (Negation f) {
-				Set<Integer> s = new HashSet<Integer> ();
-				f.getSubformula()
-				s.add();
-				return ;  
+				Set<Integer> ss = new HashSet<Integer> ();
+				ss.addAll(f.getSubformula().operation(this).stream().map(i -> -i).collect(Collectors.toCollection(HashSet::new)));
+				return ss;  
 			}
-			@Override public Formula visit (Conjunction f) {
+			@Override public Set<Integer> visit (Conjunction f) {
+				Set<Integer> ss = new HashSet<Integer> ();
+				f.getSubformulas().stream().forEach(g -> {
+					Set<Integer> s1 = g.operation(this);
+					if(!s1.isEmpty())
+						s.add(s1);
+					});
 				
-				f.getSubformulas().stream().forEach(g -> g.operation(this));
-				
-				return new Conjunction(f.getSubformulas().stream().map(g->g.operation(this)).toArray(Formula[]::new));
+				//s.addAll(f.getSubformulas().stream().map(g -> g.operation(this)).collect(Collectors.toCollection(HashSet::new)));
+				return ss;
 			}
-			@Override public Formula visit (Disjunction f) {  
-				if(m.containsKey(f))
-					return m.get(f);
-				else {
-					return new Disjunction(f.getSubformulas().stream().map(g->g.operation(this)).toArray(Formula[]::new));
-				}  
+			@Override public Set<Integer> visit (Disjunction f) {
+				Set<Integer> ss = new HashSet<Integer> ();
+				f.getSubformulas().stream().forEach(g -> ss.addAll(g.operation(this)));
+				return ss;
 			}
-			@Override public Formula visit (Implication f) {  return f; }
-			@Override public Formula visit (Constant f) { return f; }
-			@Override public Formula visit (Variable f) { return f; }
+			@Override public Set<Integer> visit (Implication f) {
+				Set<Integer> ss = new HashSet<Integer> ();
+				System.out.println("Implication");
+				return ss; 
+				}
+			@Override public Set<Integer> visit (Constant f) {
+				Set<Integer> ss = new HashSet<Integer> ();
+				System.out.println("constant");
+				return ss; 
+				}
+			@Override public Set<Integer> visit (Variable f) {
+				Set<Integer> ss = new HashSet<Integer> ();
+				ss.add(f.getName());
+				return ss;
+			}
 		};
-		f.operation(evaluator);
+		if(f instanceof Constant) {
+			Constant c = (Constant) f;
+			if(c.getValue() == false) {
+				Set<Integer> ss = new HashSet<Integer> (); 
+				s.add(ss);
+			}
+		}
+		else if(f instanceof Variable) {
+			Variable v = (Variable) f;
+			Set<Integer> ss = new HashSet<Integer> ();
+			ss.add(v.getName());
+			s.add(ss);
+		}
+		else if(f instanceof Negation) {
+			Negation v = (Negation) f;
+			Set<Integer> ss = new HashSet<Integer> ();
+			Variable vv = (Variable)v.getSubformula();
+			ss.add(-(vv.getName()));
+			s.add(ss);
+		}
+		else {
+			f.operation(evaluator);
+		}
 		return;
 	}
 	/**
