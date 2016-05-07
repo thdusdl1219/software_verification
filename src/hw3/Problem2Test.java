@@ -35,8 +35,8 @@ public class Problem2Test {
 		fail("Not yet implemented"); // TODO
 	}
 
-	@Property(trials = 10)
-	public void testCNF(@From(FormulaGenerator.class) Formula f) {
+	@Property(trials = 500)
+	public void testCNF(@From(FormulaGenerator.class) Formula f) throws Exception {
 		Problem2.CNF(f);
 	}
 
