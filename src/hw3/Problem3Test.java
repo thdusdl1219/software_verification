@@ -25,21 +25,33 @@ import hw3.formula.Variable;
 @RunWith (JUnitQuickcheck.class)
 public class Problem3Test {
 	
-	@Property(trials = 5000)
+	@Property(trials = 100)
 	public void testUnsat(@From(FormulaGenerator.class) Formula f) throws Exception {
 		Problem3 p = new Problem3 ();
-		boolean b = p.unsat(f);
+		Boolean b = p.unsat(f);
+		
+		Formula snf = Problem1.simplify(Problem1.NNF(f));
+		System.out.println(snf.toString());		
+		
+		Boolean b1 = Problem2Test.satisfiable(snf);
+		System.out.println(b.toString() + "," + b1.toString());
 		if(b) {
-			System.out.println(Problem1.simplify(Problem1.NNF(f)).toString());
-			System.out.println(Problem2.CNF(f));
+			assertTrue(!b1);
+		}
+		if(!b1) {
+			assertTrue(b);
 		}
 	}
 	
 	/*@Test
 	public void test() throws Exception {
 		Problem3 p = new Problem3 ();
-		Formula f = Formula.parseFormula("(((((! p2) && (! p3)) || (! p3)) || p2) || p2)");
+		Formula f = Formula.parseFormula("(((((((! p5) || (! p3)) || p4) && p5) || p5) && (! p5)) && (! p2))");
 		boolean b = p.unsat(f);
+		System.out.println(b);
+		f = Formula.parseFormula("(((! p8) || p7) && ((! p2) && (((! p6) || p7) && ((p5 || (! p8)) && (((! p5) || ((! p7) || p8)) && ((p4 || ((! p7) || p6)) && (((! p4) || p7) && ((! p5) && ((p3 || p6) && ((p5 || p6) && ((p5 || p8) && ((! p3) || ((! p5) || (! p6))))))))))))))");
+		b = p.unsat(f);
+		System.out.println(b);
 	} */
 
 }

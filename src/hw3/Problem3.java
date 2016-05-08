@@ -107,8 +107,8 @@ public class Problem3 {
 		//Set<Set<Integer>> dcs = cls.stream().filter(s -> s.contains(-i) && s.size() == 1).collect(Collectors.toCollection(HashSet::new));
 		
 		cls.addAll(discd);
-		//cls.removeAll(cs);
-		//cls.removeAll(ds);
+		cls.removeAll(cs);
+		cls.removeAll(ds);
 		
 		//if(!scs.isEmpty() && !dcs.isEmpty())
 			//cls.add(new HashSet<Integer> ());
