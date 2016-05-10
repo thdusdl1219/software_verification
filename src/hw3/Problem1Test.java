@@ -81,7 +81,7 @@ public class Problem1Test {
 		assertEquals(Problem1.vars(nff), Problem1.vars(f));
 	}
 
-	@Property(trials = 200)
+	@Property(trials = 50)
 	public void testfValueSameNNF(@From(FormulaGenerator.class) Formula f) {
 		long systemTime = System.currentTimeMillis();
 		Formula nff = Problem1.NNF(f);

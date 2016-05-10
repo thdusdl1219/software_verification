@@ -25,13 +25,13 @@ import hw3.formula.Variable;
 @RunWith (JUnitQuickcheck.class)
 public class Problem3Test {
 	
-	@Property(trials = 100)
+	@Property(trials = 50)
 	public void testUnsat(@From(FormulaGenerator.class) Formula f) throws Exception {
 		Problem3 p = new Problem3 ();
-		Boolean b = p.unsat(f);
-		
 		Formula snf = Problem1.simplify(Problem1.NNF(f));
-		System.out.println(snf.toString());		
+		System.out.println(Problem1.vars(snf).size());
+		
+		Boolean b = p.unsat(f);
 		
 		Boolean b1 = Problem2Test.satisfiable(snf);
 		System.out.println(b.toString() + "," + b1.toString());
@@ -42,16 +42,18 @@ public class Problem3Test {
 			assertTrue(b);
 		}
 	}
-	
-	/*@Test
+	/*
+	@Test
 	public void test() throws Exception {
 		Problem3 p = new Problem3 ();
 		Formula f = Formula.parseFormula("(((((((! p5) || (! p3)) || p4) && p5) || p5) && (! p5)) && (! p2))");
 		boolean b = p.unsat(f);
 		System.out.println(b);
+		//System.out.println(Problem2.CNF(f));
 		f = Formula.parseFormula("(((! p8) || p7) && ((! p2) && (((! p6) || p7) && ((p5 || (! p8)) && (((! p5) || ((! p7) || p8)) && ((p4 || ((! p7) || p6)) && (((! p4) || p7) && ((! p5) && ((p3 || p6) && ((p5 || p6) && ((p5 || p8) && ((! p3) || ((! p5) || (! p6))))))))))))))");
 		b = p.unsat(f);
 		System.out.println(b);
-	} */
+	} 
+	*/
 
 }

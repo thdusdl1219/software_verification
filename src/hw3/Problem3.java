@@ -29,7 +29,8 @@ public class Problem3 {
 		
 		
 		//TODO: resolution rule is applied until the empty clause is derived or, the resolution of every possible pair of clauses is performed.
-		Set<Integer> vars = Problem1.vars(snf);
+		Set<Integer> vars = Problem2.vars(cls);
+		//Set<Integer> vars = Problem1.vars(snf);
 		
 		while(true) {
 			if(cls.stream().anyMatch(subs -> subs.isEmpty())) {

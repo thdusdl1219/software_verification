@@ -35,16 +35,27 @@ import hw3.formula.Variable;
 public class Problem2Test {
 
 
-	@Property(trials = 300)
+	@Property(trials = 100)
 	public void testCNF(@From(FormulaGenerator.class) Formula f) throws Exception {
 		Set<Set<Integer>> s = Problem2.CNF(f);
+		Problem3 p = new Problem3 ();
 		Formula snf = Problem1.simplify(Problem1.NNF(f));
-		System.out.println(snf.toString());
-		System.out.println(setToFormula(s).toString());
-		Boolean b1 = satisfiable(snf);
-		Boolean b2 = satisfiable(s);
-		System.out.println(b1.toString() + "," + b2.toString());
-		assertEquals(b1, b2);
+		Formula sf = setToFormula(s);
+		Boolean b1 = p.unsat(f);
+		Boolean b2 = p.unsat(sf);
+		
+		if(b1){
+			System.out.println(snf.toString());
+			System.out.println(sf.toString());
+		}
+		
+		if(!b1) {
+			assertTrue(!b2);
+		}
+		if(!b2) {
+			assertTrue(!b1);
+		}
+
 	}
 	
 	public static boolean satisfiable(Formula f) throws Exception {
